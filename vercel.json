@@ -1,0 +1,8 @@
+{
+    "crons": [
+      {
+        "path": "/api/generar-enigma",
+        "schedule": "5 0 * * *"
+      }
+    ]
+  }
