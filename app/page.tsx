@@ -23,9 +23,9 @@ export default function Home() {
 
   const cargarEnigmaDelDia = async () => {
     setCargando(true);
-    const hoy = new Date().toISOString().split('T')[0]; // "2026-04-27"
+    const hoy = new Date().toISOString().split('T')[0];
 
-    // 1. Intentar obtener el enigma de hoy desde Supabase
+    // 1. Buscar enigma en Supabase para hoy
     const { data: enigmaExistente, error } = await supabase
       .from('enigmas_diarios')
       .select('*')
@@ -33,31 +33,31 @@ export default function Home() {
       .single();
 
     if (enigmaExistente) {
-      // Si ya existe, lo cargamos directamente
       setHistoria(enigmaExistente.historia);
       setSospechosos(enigmaExistente.sospechosos);
       setCulpableSecreto(enigmaExistente.culpable_secreto);
       setCargando(false);
-    } else {
-      // Si no existe, lo generamos llamando a nuestra API
+      return;
+    }
+
+    // 2. Si no hay enigma en BD, llamar a la API (solo si no estamos ya generando)
+    if (!enigmaExistente && !cargando) {
       try {
         const res = await fetch('/api/generar-enigma');
         const nuevoEnigma = await res.json();
-        if (nuevoEnigma.error) {
-          // Si el backend devolvió un error, lo mostramos
-          setResultadoFinal("No hay enigma disponible hoy. Vuelve más tarde.");
-        } else {
+        if (!nuevoEnigma.error) {
           setHistoria(nuevoEnigma.historia);
           setSospechosos(nuevoEnigma.sospechosos);
           setCulpableSecreto(nuevoEnigma.culpable_secreto);
+        } else {
+          // Error de la API: mostramos mensaje amigable
+          setResultadoFinal("La IA no está disponible ahora. Intenta de nuevo más tarde.");
         }
       } catch (err) {
-        console.error(err);
-        setResultadoFinal("Error al conectar con el servidor.");
-      } finally {
-        setCargando(false);
+        setResultadoFinal("Error de conexión con el servidor.");
       }
     }
+    setCargando(false);
   };
 
   // Manejar el envío de una pregunta
